@@ -1,51 +1,87 @@
 import streamlit as st
 
-# Inicializar estado
+st.set_page_config(page_title="Chat Financeiro", layout="centered")
+
+# Estado
 if "historico" not in st.session_state:
     st.session_state.historico = []
 
 if "saldo" not in st.session_state:
     st.session_state.saldo = 0.0
 
-st.title("💬 Controle Financeiro Chat")
+# CSS estilo WhatsApp
+st.markdown("""
+<style>
+.chat-container {
+    max-width: 600px;
+    margin: auto;
+}
 
-# Mostrar histórico
-for msg in st.session_state.historico:
-    st.write(msg)
+.msg {
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin: 5px 0;
+    max-width: 70%;
+    display: inline-block;
+}
 
-# Entrada do usuário
-user_input = st.text_input("Digite sua mensagem:")
+.user {
+    background-color: #DCF8C6;
+    align-self: flex-end;
+    float: right;
+    clear: both;
+}
 
-def processar_input(texto):
+.bot {
+    background-color: #EAEAEA;
+    float: left;
+    clear: both;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.title("💬 Chat Financeiro")
+
+def processar(texto):
     texto = texto.lower()
 
     if "gastei" in texto:
         try:
             valor = float(texto.split(" ")[1])
             st.session_state.saldo -= valor
-            return f"💸 Gasto registrado: R${valor:.2f}"
+            return f"💸 Gasto: R${valor:.2f}"
         except:
-            return "❌ Não entendi o valor."
+            return "❌ Não entendi o valor"
 
     elif "recebi" in texto:
         try:
             valor = float(texto.split(" ")[1])
             st.session_state.saldo += valor
-            return f"💰 Receita registrada: R${valor:.2f}"
+            return f"💰 Receita: R${valor:.2f}"
         except:
-            return "❌ Não entendi o valor."
+            return "❌ Não entendi o valor"
 
     elif "saldo" in texto:
-        return f"📊 Seu saldo é: R${st.session_state.saldo:.2f}"
+        return f"📊 Saldo: R${st.session_state.saldo:.2f}"
 
-    else:
-        return "🤖 Não entendi. Tente: 'gastei 50' ou 'recebi 100'"
+    return "🤖 Use: gastei 50 | recebi 100 | saldo"
 
-# Processar mensagem
+# Exibir mensagens
+st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+
+for tipo, msg in st.session_state.historico:
+    classe = "user" if tipo == "user" else "bot"
+    st.markdown(f'<div class="msg {classe}">{msg}</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Input
+user_input = st.text_input("Digite sua mensagem", key="input")
+
 if user_input:
-    resposta = processar_input(user_input)
+    resposta = processar(user_input)
 
-    st.session_state.historico.append(f"Você: {user_input}")
-    st.session_state.historico.append(f"Bot: {resposta}")
+    st.session_state.historico.append(("user", user_input))
+    st.session_state.historico.append(("bot", resposta))
 
     st.rerun()
